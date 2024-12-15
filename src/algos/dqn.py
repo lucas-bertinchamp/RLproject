@@ -48,25 +48,57 @@ class DQNAgent:
         return 0
 
     def learn(self):
-        states, actions, rewards, next_states, dones = self.buffer.sample()
-
-        # Compute Q targets
-        q_targets_next = self.qnetwork_target(next_states).max(1)[0].detach()
-        q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
-
-        # Compute Q expected
-        q_expected = self.qnetwork_local(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-
-        # Compute loss
-        loss = nn.MSELoss()(q_expected, q_targets)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        # Soft update of target network
-        self.soft_update(self.qnetwork_local, self.qnetwork_target)
         
-        return loss.item()
+        if self.buffer.name == "ReplayBuffer":
+            states, actions, rewards, next_states, dones = self.buffer.sample()
+
+            # Compute Q targets
+            with torch.no_grad():
+                q_targets_next = self.qnetwork_target(next_states).max(1)[0].detach()
+                q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
+
+            # Compute Q expected
+            q_expected = self.qnetwork_local(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+
+            # Compute loss
+            loss = nn.MSELoss()(q_expected, q_targets)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            # Soft update of target network
+            self.soft_update(self.qnetwork_local, self.qnetwork_target)
+            
+            return loss.item()
+        
+        elif self.buffer.name == "PrioritizedReplayBuffer":
+            states, actions, rewards, next_states, dones, weights, indices = self.buffer.sample()
+            
+            # Compute Q targets
+            with torch.no_grad():
+                q_targets_next = self.qnetwork_target(next_states).max(1)[0].detach()
+                q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
+            
+            # Compute Q expected
+            q_expected = self.qnetwork_local(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+            
+            # Compute td error and loss
+            td_error = q_expected - q_targets
+            loss = (td_error ** 2 * weights).mean()
+            
+            # Backpropagate importance-weighted loss
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            
+            # Update priorities
+            priorities = td_error.abs().detach().numpy().tolist()
+            self.buffer.update_priorities(indices, priorities)
+            
+            # Soft update of target network
+            self.soft_update(self.qnetwork_local, self.qnetwork_target)
+            
+            return loss.item()
 
     def soft_update(self, local_model, target_model):
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):

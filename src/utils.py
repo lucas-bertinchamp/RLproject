@@ -36,6 +36,12 @@ def plot_training(scores, training_loss, model_name=None):
         
         if model_name is not None:
             plt.savefig(f"models/{model_name}/plots/{'scores' if i == 0 else 'loss'}.png")
+            
+    with open(f"models/{model_name}/plots/scores.txt", "w") as f:
+        f.write(str(scores))
+        
+    with open(f"models/{model_name}/plots/loss.txt", "w") as f:
+        f.write(str(training_loss))
         
         
 def save_model(agent, model_name):

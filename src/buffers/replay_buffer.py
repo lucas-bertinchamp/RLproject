@@ -1,14 +1,23 @@
-from collections import deque
 import random
 import torch
 
 class ReplayBuffer:
     def __init__(self, buffer_size, batch_size):
-        self.buffer = deque(maxlen=buffer_size)
+        self.buffer = []
         self.batch_size = batch_size
+        self.buffer_size = buffer_size
+        
+        self.position = 0
+        
+        self.name = "ReplayBuffer"
         
     def add(self, state, action, reward, next_state, done):
-        self.buffer.append((state, action, reward, next_state, done))
+        if len(self.buffer) < self.buffer_size:
+            self.buffer.append((state, action, reward, next_state, done))
+        else:
+            self.buffer[self.position] = (state, action, reward, next_state, done)
+            
+        self.position = (self.position + 1) % self.buffer_size
 
     def sample(self):
         batch = random.sample(self.buffer, self.batch_size)

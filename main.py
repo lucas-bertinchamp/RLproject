@@ -1,6 +1,7 @@
 import gym
 from src.algos.dqn import DQNAgent
 from src.buffers.replay_buffer import ReplayBuffer
+from src.buffers.prioritized_replay_buffer import PrioritizedReplayBuffer
 from src.trainer import train
 from src.utils import *
 import argparse
@@ -27,7 +28,8 @@ if __name__ == "__main__":
     }
     
     buffers = {
-        "ReplayBuffer": ReplayBuffer
+        "ReplayBuffer": ReplayBuffer,
+        "PrioritizedReplayBuffer": PrioritizedReplayBuffer
     }
     
     parser = get_parser()
@@ -62,7 +64,7 @@ if __name__ == "__main__":
         n_episodes=args.n_episodes,
         max_t=1000,
         epsilon_start=1.0,
-        epsilon_end=0.01,
+        epsilon_end=0.05,
         epsilon_decay=0.995
     )
 

@@ -53,6 +53,8 @@ Here are the steps to create and use a new buffer:
 - Add a new buffer class in the `src/buffers` folder. The class should implement the `add` and `sample` methods. The `__init__` method should take the following arguments:
   - `buffer_size`: the maximum number of elements in the buffer
   - `batch_size`: the number of elements to sample at each call to the `sample` method
+- Add an attribute `name` to the buffer class. This attribute should be a string containing the name of the buffer.
+- In the `src/algos/dqn.py` file, add an elif statement in the `learn` method to handle the new buffer.
 - Import the buffer class in the `main.py` file.
 - Add the buffer in the `buffers` dictionnary in the `main.py` file.
 - You can now use the buffer as an argument of `--buffer` in the command line.
