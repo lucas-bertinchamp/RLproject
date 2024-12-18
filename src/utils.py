@@ -4,6 +4,13 @@ import os
 import torch
 from src.algos.dqn import DQNAgent
 import sys
+import shutil
+import gym
+from gym.wrappers import RecordVideo
+from pathlib import Path
+import subprocess
+
+
 
 def create_folders(model_name):
     os.makedirs("models", exist_ok=True)
@@ -77,3 +84,62 @@ def visualize_agent(env, agent):
         
     env.close()
     print(f"Total Reward: {total_reward}")
+    
+def create_video(env, agent, video_folder='videos', n_episodes=25):
+    # Clean up video folder
+    if os.path.exists(video_folder):
+        shutil.rmtree(video_folder)
+    os.makedirs(video_folder)
+
+    # Use RecordVideo wrapper to save video frames
+    env = RecordVideo(env, video_folder)
+
+    for episode in range(n_episodes):
+        state = env.reset()
+        done = False
+        score = 0
+
+        while not done:
+            action = agent.select_action(state, epsilon=0.0)  # Greedy policy (epsilon=0)
+            state, reward, done, _ = env.step(action)
+            score += reward
+
+    env.close()
+    
+def del_temp():
+    if os.path.exists("models/temp"):
+        shutil.rmtree("models/temp")
+    
+def concat_videos(model_name):
+
+    video_folder = f"models/temp/"
+    path = Path(video_folder)
+    # Find all videos in the folder
+    videos_path = [f for f in path.rglob("*.mp4")]
+    
+    # Concat
+    list_file = "video_list.txt"
+    with open(list_file, "w") as f:
+        for video in videos_path:
+            f.write(f"file '{video}'\n")
+
+    output_file = f"models/{model_name}/video.mp4"
+    
+    # Commande FFmpeg pour concaténer les vidéos
+    command = [
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", list_file,
+        "-c", "copy",  # Copie les flux sans réencodage
+        output_file
+    ]
+    
+    try:
+        subprocess.run(command, check=True)
+        print(f"Vidéo concaténée avec succès : {output_file}")
+    except subprocess.CalledProcessError as e:
+        print(f"Erreur lors de la concaténation : {e}")
+    finally:
+        # Supprimez le fichier temporaire
+        Path(list_file).unlink()
