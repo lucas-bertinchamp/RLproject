@@ -48,7 +48,8 @@ class DQNAgent:
         return 0
 
     def learn(self):
-        
+        if len(self.buffer) < self.batch_size:
+            return 0  
         if self.buffer.name == "ReplayBuffer":
             states, actions, rewards, next_states, dones = self.buffer.sample()
 
@@ -100,19 +101,16 @@ class DQNAgent:
             
             return loss.item()
         
-        elif self.buffer.name == "DHERReplayBuffer":
-            # Sampling from DHER replay buffer
+        elif self.buffer.name == "DHERReplayBuffer" or self.buffer.name == "HERReplayBuffer":
+            # HERReplayBuffer or DHERReplayBuffer returns transitions with goals
             states, actions, rewards, next_states, dones, goals = self.buffer.sample()
 
-            # Convert dones from a boolean tensor to a float tensor for arithmetic operations
-            dones = dones.float()
-
-            # Calculate the Q targets for next states
+            # Compute Q targets
             with torch.no_grad():
                 q_targets_next = self.qnetwork_target(next_states).max(1)[0].detach()
                 q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
 
-            # Get expected Q values from the local model for the current states and actions
+            # Compute Q expected
             q_expected = self.qnetwork_local(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
             # Compute loss
