@@ -1,9 +1,11 @@
 import numpy as np
+from src.utils import create_video
 
-def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_decay):
+def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_decay, name=None):
     scores = []
     training_loss = []
     epsilon = epsilon_start
+    env_video = None
 
     for episode in range(1, n_episodes + 1):
         state = env.reset()
@@ -32,5 +34,9 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
         scores.append(total_reward)
         epsilon = max(epsilon_end, epsilon_decay * epsilon)
 
-        print(f"Episode {episode}\tAverage Score: {np.mean(scores[-100:]):.2f}") if episode % 10 == 0 else 0
+
+        if episode % 10 == 0:
+            print(f"Episode {episode}\tAverage Score: {np.mean(scores[-100:]):.2f}")
+            create_video(env, agent, video_folder=f'models/temp/{name}_videos/{episode}', n_episodes=1)
+
     return scores, training_loss

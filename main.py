@@ -10,6 +10,7 @@ from src.utils import *
 import argparse
 import random
 import numpy as np
+import warnings
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -25,6 +26,9 @@ def get_parser():
 
 
 if __name__ == "__main__":
+    
+    warnings.filterwarnings("ignore")   
+    del_temp()
 
     agents = {
         "dqn": DQNAgent,
@@ -79,7 +83,8 @@ if __name__ == "__main__":
         max_t=1000,
         epsilon_start=1.0,
         epsilon_end=0.05,
-        epsilon_decay=0.995
+        epsilon_decay=0.995,
+        name = args.name
     )
 
     # Save pipeline
@@ -88,5 +93,7 @@ if __name__ == "__main__":
     plot_training(scores, training_loss, model_name=args.name)
     save_model(agent, args.name)
     save_params(vars(args), args.name)
+    concat_videos(args.name)
+    del_temp()
     
     # visualize_agent(env, agent)
