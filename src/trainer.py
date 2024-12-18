@@ -18,7 +18,7 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
             if done:
                 break
             
-        training_loss.append(episode_loss / t)
+        training_loss.append(episode_loss / max(1, t))
 
         scores.append(total_reward)
         epsilon = max(epsilon_end, epsilon_decay * epsilon)
