@@ -52,7 +52,8 @@ class DDQNAgent:
         return 0
     
     def learn(self):
-        
+        if len(self.buffer) < self.batch_size:
+            return 0        
         if self.buffer.name == "ReplayBuffer":
             states, actions, rewards, next_states, dones = self.buffer.sample()
 

@@ -71,7 +71,7 @@ class HERReplayBuffer:
         
         return (
             torch.tensor(states, dtype=torch.float32),
-            torch.tensor(actions, dtype=torch.float32),
+            torch.tensor(actions, dtype=torch.int64),
             torch.tensor(rewards, dtype=torch.float32),
             torch.tensor(next_states, dtype=torch.float32),
             torch.tensor(dones, dtype=torch.float32),
