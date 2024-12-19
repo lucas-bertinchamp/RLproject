@@ -136,7 +136,7 @@ def concat_videos(model_name):
     ]
     
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"Vidéo concaténée avec succès : {output_file}")
     except subprocess.CalledProcessError as e:
         print(f"Erreur lors de la concaténation : {e}")
