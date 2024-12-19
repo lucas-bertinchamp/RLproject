@@ -12,7 +12,10 @@ Project members:
 
 The goal of this project is to implement and compare the performance of different buffers in the context of reinforcement learning. We will implement the following buffers:
 
-- ReplayBuffer
+- Replay Buffer
+- Prioritized Experience Replay (PER)
+- Hindsight Experience Replay (HER)
+- Diverse Hindsight Experience Replay (DHER)
 
 ## Training
 
