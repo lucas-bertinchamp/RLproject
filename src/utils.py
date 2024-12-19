@@ -109,8 +109,15 @@ def concat_videos(model_name):
 
     video_folder = f"models/temp/"
     path = Path(video_folder)
-    # Find all videos in the folder
+    # Find all videos in the folder and sort them
     videos_path = [f for f in path.rglob("*.mp4")]
+    order_dict = {}
+    for video_path in videos_path:
+        episode = video_path.split("-")[-1]
+        episode = video_path.split(".")[0]
+        order_dict[int(episode)] = video_path
+        
+    videos_path = [order_dict[k] for k in sorted(order_dict.keys())]
     
     # Concat
     list_file = "video_list.txt"
