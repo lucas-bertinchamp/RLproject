@@ -45,6 +45,7 @@ After training, the results will be saved in the `models` folder which will cont
 - `model_name/plots/`: folder containing the training plots
 - `model_name/command.txt`: file containing the command used to train the model
 - `model_name/params.json`: file containing the parameters used to train the model
+- `model_name/video.mp4`: file containing the video of the agent playing the game along the training
 
 ## Creating a new buffer
 
