@@ -1,1 +1,0 @@
-python main.py --env CartPole-v1 --agent dqn --buffer ReplayBuffer --n_episodes 500 --name cartpole_repbuff_dqn

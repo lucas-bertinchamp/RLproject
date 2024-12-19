@@ -38,7 +38,7 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
 
         if episode % 10 == 0:
             print(f"Episode {episode}\tAverage Score: {np.mean(scores[-100:]):.2f}")
-            create_video(env, agent, video_folder=f'models/temp/{name}_videos/{episode}', n_episodes=1)
+            create_video(env, agent, video_folder=f'models/temp/{name}_videos/{episode}', n_episodes=1, name_prefix=episode)
             sys.stdout.flush()
 
     return scores, training_loss

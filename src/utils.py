@@ -80,14 +80,14 @@ def visualize_agent(env, agent):
     env.close()
     print(f"Total Reward: {total_reward}")
     
-def create_video(env, agent, video_folder='videos', n_episodes=25):
+def create_video(env, agent, video_folder='videos', n_episodes=25, name_prefix='0'):
     # Clean up video folder
     if os.path.exists(video_folder):
         shutil.rmtree(video_folder)
     os.makedirs(video_folder)
 
     # Use RecordVideo wrapper to save video frames
-    env = RecordVideo(env, video_folder)
+    env = RecordVideo(env, video_folder, name_prefix=name_prefix)
 
     for episode in range(n_episodes):
         state = env.reset()
@@ -113,9 +113,8 @@ def concat_videos(model_name):
     videos_path = [f for f in path.rglob("*.mp4")]
     order_dict = {}
     for video_path in videos_path:
-        episode = video_path.split("-")[-1]
-        episode = video_path.split(".")[0]
-        order_dict[int(episode)] = video_path
+        episode = int(video_path.name.split("-")[0])
+        order_dict[episode] = video_path
         
     videos_path = [order_dict[k] for k in sorted(order_dict.keys())]
     
