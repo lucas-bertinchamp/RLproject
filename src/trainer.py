@@ -6,16 +6,19 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
     scores = []
     training_loss = []
     epsilon = epsilon_start
-    env_video = None
 
     for episode in range(1, n_episodes + 1):
         state = env.reset()
         total_reward = 0
         episode_loss = 0
         episode_transitions = []  # Store the transitions for the full episode
+        
         for t in range(max_t):
             action = agent.select_action(state, epsilon)
             next_state, reward, done, _ = env.step(action)
+            goal = next_state  # Use the next state as the goal for HER
+            transition = (state, action, reward, next_state, done, goal)
+            episode_transitions.append(transition)
             episode_loss += agent.step(state, action, reward, next_state, done)
             state = next_state
             total_reward += reward
@@ -26,7 +29,8 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
             agent.buffer.add_episode(episode_transitions)
         else:
             for transition in episode_transitions:
-                agent.buffer.add(*transition)  # Default behavior if no HER
+                state, action, reward, next_state, done, _ = transition
+                agent.buffer.add(state, action, reward, next_state, done)  # Default behavior if no HER
             
             # Trigger learning
         episode_loss += agent.learn()
