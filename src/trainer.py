@@ -11,30 +11,24 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
         state = env.reset()
         total_reward = 0
         episode_loss = 0
-        episode_transitions = []  # Store the transitions for the full episode
+        episode_transitions = []
         
         for t in range(max_t):
             action = agent.select_action(state, epsilon)
             next_state, reward, done, _ = env.step(action)
-            goal = next_state  # Use the next state as the goal for HER
-            transition = (state, action, reward, next_state, done, goal)
-            episode_transitions.append(transition)
-            episode_loss += agent.step(state, action, reward, next_state, done)
+            goal = next_state
+            episode_transitions.append((state, action, reward, next_state, done, goal))
+            episode_loss += agent.step(state, action, reward, next_state, done, goal)
             state = next_state
             total_reward += reward
             if done:
                 break
-            # Add the entire episode to the HER buffer (with hindsight goals)
-        if hasattr(agent.buffer, "add_episode"):
-            agent.buffer.add_episode(episode_transitions)
-        else:
-            for transition in episode_transitions:
-                state, action, reward, next_state, done, _ = transition
-                agent.buffer.add(state, action, reward, next_state, done)  # Default behavior if no HER
             
-            # Trigger learning
+        # Trigger learning
         episode_loss += agent.learn()
         training_loss.append(episode_loss / max(1, t))
+        if agent.buffer.name == "HERReplayBuffer":
+            agent.buffer.add_episode(episode_transitions)
 
         scores.append(total_reward)
         epsilon = max(epsilon_end, epsilon_decay * epsilon)

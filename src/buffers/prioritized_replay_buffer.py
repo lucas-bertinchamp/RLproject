@@ -20,7 +20,7 @@ class PrioritizedReplayBuffer:
         
         self.name = "PrioritizedReplayBuffer"
 
-    def add(self, state, action, reward, next_state, done):
+    def add(self, state, action, reward, next_state, done, goal=None):
         """
         Add a new experience to the buffer.
 
@@ -30,6 +30,7 @@ class PrioritizedReplayBuffer:
             reward: The reward received.
             next_state: The next state observed.
             done: Whether the episode is done.
+            goal: Not used in this buffer.
         """
         max_priority = max(self.priorities, default=1.0)  # Assign max priority to new transitions
 

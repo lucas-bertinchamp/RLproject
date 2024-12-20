@@ -61,10 +61,9 @@ if __name__ == "__main__":
         buffer = DHERReplayBuffer(
             buffer_size=args.buffer_size, 
             batch_size=args.batch_size,
-            get_q_value_func=lambda state, action:None,
+            env=env,
             gamma=0.99)
         agent = DQNAgent(state_size, action_size, buffer, 0.99, 0.001, 0.001)
-        buffer.get_q_value_func = lambda state, action: agent.get_q_value(state, action)
         
     elif args.buffer == "HERReplayBuffer":
         buffer = HERReplayBuffer(

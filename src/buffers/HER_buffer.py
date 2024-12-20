@@ -68,7 +68,6 @@ class HERReplayBuffer:
     def sample(self):
         batch = random.sample(self.buffer, self.batch_size)
         states, actions, rewards, next_states, dones, goals = zip(*batch)
-        
         return (
             torch.tensor(states, dtype=torch.float32),
             torch.tensor(actions, dtype=torch.int64),

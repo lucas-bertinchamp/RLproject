@@ -41,8 +41,8 @@ class DQNAgent:
         with torch.no_grad():
             return torch.argmax(self.qnetwork_local(state)).item()
 
-    def step(self, state, action, reward, next_state, done) -> float:
-        self.buffer.add(state, action, reward, next_state, done)
+    def step(self, state, action, reward, next_state, done, goal=None) -> float:
+        self.buffer.add(state, action, reward, next_state, done, goal)
         if len(self.buffer) > self.batch_size:
             return self.learn()
         return 0

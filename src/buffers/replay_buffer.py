@@ -11,7 +11,7 @@ class ReplayBuffer:
         
         self.name = "ReplayBuffer"
         
-    def add(self, state, action, reward, next_state, done):
+    def add(self, state, action, reward, next_state, done, goal=None):
         if len(self.buffer) < self.buffer_size:
             self.buffer.append((state, action, reward, next_state, done))
         else:
