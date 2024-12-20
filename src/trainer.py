@@ -27,7 +27,7 @@ def train(env, agent, n_episodes, max_t, epsilon_start, epsilon_end, epsilon_dec
         # Trigger learning
         episode_loss += agent.learn()
         training_loss.append(episode_loss / max(1, t))
-        if agent.buffer.name == "HERReplayBuffer":
+        if agent.buffer.name == "HERReplayBuffer" or agent.buffer.name == "DHERReplayBuffer":
             agent.buffer.add_episode(episode_transitions)
 
         scores.append(total_reward)

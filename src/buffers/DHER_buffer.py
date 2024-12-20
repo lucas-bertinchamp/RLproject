@@ -1,76 +1,93 @@
 import random
-import numpy as np
 import torch
-from collections import deque
+import numpy as np
 
 class DHERReplayBuffer:
-    def __init__(self, buffer_size, batch_size, env, gamma, alpha=0.6, k=4):
-        """
-        Initialize a Dynamic Hindsight Experience Replay Buffer.
-
-        Args:
-            buffer_size (int): Maximum number of transitions to store in the buffer.
-            batch_size (int): Number of transitions to sample from the buffer.
-            get_q_value_func (callable): Function to compute Q-values for states and actions.
-            gamma (float): Discount factor for future rewards.
-            alpha (float): Determines the extent of prioritization based on TD Errors.
-        """
-        self.buffer = deque(maxlen=buffer_size)
+    def __init__(self, buffer_size, batch_size, max_failed_episodes=25):
+        self.buffer = []
+        self.failed_episodes = []
         self.batch_size = batch_size
         self.buffer_size = buffer_size
-        self.env = env
-        self.gamma = gamma
-        self.alpha = alpha
         self.position = 0
+        self.max_failed_episodes = max_failed_episodes  # Limit for failed episodes
         self.name = "DHERReplayBuffer"
-        self.k = k
 
     def add(self, state, action, reward, next_state, done, goal=None):
-        
-        goal_pos, goal_vel = goal
-        self.buffer.append((state, action, reward, next_state, done, np.array([goal_pos])))
-        
-        for _ in range(self.k):
-            dynamic_goal = self.generate_dynamic_goal(next_state)
-            # Recalculate reward based on the new dynamic goal
-            reward_dynamic = self.compute_reward(next_state, dynamic_goal)
-            done_dynamic = self.is_goal_reached(next_state, dynamic_goal)
-            # Store the hindsight transition
-            self.buffer.append((state, action, reward_dynamic, next_state, done_dynamic, dynamic_goal))
+        """
+        Add a transition to the buffer with an optional goal.
 
-    def generate_dynamic_goal(self, state):
+        If no goal is provided, use the next_state as a default goal.
         """
-        Dynamically generates a goal based on the agent's needs.
-        """
-        # Example: Select a random position in the current range
-        position, _ = state
-        dynamic_goal_position = np.clip(position + np.random.uniform(-0.1, 0.1), self.env.min_position, self.env.max_position)
-        return np.array([dynamic_goal_position])
+        if goal is None:
+            goal = next_state
+        
+        if len(self.buffer) < self.buffer_size:
+            self.buffer.append((state, action, reward, next_state, done, goal))
+        else:
+            self.buffer[self.position] = (state, action, reward, next_state, done, goal)
+        
+        self.position = (self.position + 1) % self.buffer_size
     
-    def compute_reward(self, state, goal):
+    def add_episode(self, episode_transitions):
         """
-        Computes the reward based on the dynamic goal.
+        Add an entire episode to the buffer with DHER logic.
         """
-        position, _ = state
-        return 0 if np.abs(position - goal[0]) < 0.05 else -1  # Small tolerance for reaching the goal
+        # Add original transitions to the buffer
+        for transition in episode_transitions:
+            self.add(*transition)
+        
+        # Check if episode is a failure and store it
+        if not self._reached_goal(episode_transitions):
+            if len(self.failed_episodes) >= self.max_failed_episodes:
+                self.failed_episodes.pop(0)  # Remove oldest failed episode
+            self.failed_episodes.append(episode_transitions)
 
-    def is_goal_reached(self, state, goal):
+            # Combine failed episodes with inverse simulation
+            self._combine_with_failed_episodes(episode_transitions)
+    
+    def _reached_goal(self, episode_transitions):
         """
-        Checks if the dynamic goal has been reached.
+        Check if the final state in the episode achieves the goal.
         """
-        position, _ = state
-        return np.abs(position - goal[0]) < 0.05
+        final_state = episode_transitions[-1][3]  # Final next_state
+        goal = episode_transitions[-1][5]        # Final goal
+        return np.all(np.isclose(final_state, goal, atol=1e-3))
+
+    def _combine_with_failed_episodes(self, new_episode):
+        """
+        Perform inverse simulation to generate imagined trajectories
+        by combining failed episodes with the current new episode.
+        """
+        for failed_episode in self.failed_episodes:
+            for t_new, transition_new in enumerate(new_episode):
+                _, _, _, next_state_new, _, _ = transition_new  # Next state from new episode
+                
+                for t_failed, transition_failed in enumerate(failed_episode):
+                    _, _, _, next_state_failed, _, goal_failed = transition_failed  # Failed goal
+                    
+                    # If goals are close, combine the trajectories
+                    if np.linalg.norm(next_state_new - goal_failed) < 0.05:  # Check goal proximity
+                        imagined_goal = goal_failed
+                        for k in range(min(t_new, t_failed) + 1):
+                            state, action, _, next_state, done, _ = new_episode[k]
+                            reward = -np.linalg.norm(next_state - imagined_goal)  # Shaped reward
+                            self.add(state, action, reward, next_state, done, imagined_goal)
 
     def sample(self):
+        """
+        Sample a batch of transitions from the buffer.
+        """
         batch = random.sample(self.buffer, self.batch_size)
         states, actions, rewards, next_states, dones, goals = zip(*batch)
+
+        # Convert to tensors
         return (
-            torch.tensor(states, dtype=torch.float32),
-            torch.tensor(actions, dtype=torch.int64),
-            torch.tensor(rewards, dtype=torch.float32),
-            torch.tensor(next_states, dtype=torch.float32),
-            torch.tensor(dones, dtype=torch.float32),
-            torch.tensor(goals, dtype=torch.float32)
+            torch.tensor(np.array(states), dtype=torch.float32),
+            torch.tensor(np.array(actions), dtype=torch.int64),
+            torch.tensor(np.array(rewards), dtype=torch.float32),
+            torch.tensor(np.array(next_states), dtype=torch.float32),
+            torch.tensor(np.array(dones), dtype=torch.float32),
+            torch.tensor(np.array(goals), dtype=torch.float32)
         )
     
     def __len__(self):

@@ -1,0 +1,1 @@
+python main.py --env MountainCar-v0 --agent dqn --buffer PrioritizedReplayBuffer --n_episodes 1000 --name mountain_priorepbuff_dqn

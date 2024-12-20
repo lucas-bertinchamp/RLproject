@@ -1,0 +1,1 @@
+python main.py --env MountainCar-v0 --agent dqn --buffer HERReplayBuffer --n_episodes 1000 --name mountai_herrepbuff_dqn
