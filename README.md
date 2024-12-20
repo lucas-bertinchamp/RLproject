@@ -15,7 +15,7 @@ The goal of this project is to implement and compare the performance of differen
 - Replay Buffer
 - Prioritized Experience Replay (PER)
 - Hindsight Experience Replay (HER)
-- Diverse Hindsight Experience Replay (DHER)
+- Dynamic Hindsight Experience Replay (DHER)
 
 ## Training
 
