@@ -15,7 +15,7 @@ class HERReplayBuffer:
         """
         Add a transition to the buffer with optional goal
         
-        If no goal is provided, use the next_state as a default goal
+        If no goal is provided, next_state is used as a default goal
         """
         if goal is None:
             goal = next_state
@@ -47,15 +47,15 @@ class HERReplayBuffer:
         for i, transition in enumerate(episode_transitions):
             state, action, reward, next_state, done, goal = transition
             
-            # Select alternative goal based on strategy
+            # Select alternative goal based on strategy (here final)
             if self.goal_selection_strategy == 'final':
                 alternative_goal = episode_transitions[-1][3]  # final state
-            elif self.goal_selection_strategy == 'random':
+            elif self.goal_selection_strategy == 'random': # random give same as random sampling (first case studied)
                 alternative_goal = random.choice(episode_transitions)[3]
             else:
-                raise ValueError(f"Unknown goal selection strategy: {self.goal_selection_strategy}")
+                raise ValueError(f"Error of strategy")
             
-            # Recalculate reward with the alternative goal
+            # Recalculate reward with the alternative goal based on closeness
             alternative_reward = float(np.all(np.isclose(next_state, alternative_goal)))
             
             her_transitions.append((
@@ -65,9 +65,10 @@ class HERReplayBuffer:
         
         return her_transitions
     
+    # Convert to PyTorch tensor
     def sample(self):
         batch = random.sample(self.buffer, self.batch_size)
-        states, actions, rewards, next_states, dones, goals = zip(*batch)
+        states, actions, rewards, next_states, dones, goals = zip(*batch) #Unpack
         return (
             torch.tensor(states, dtype=torch.float32),
             torch.tensor(actions, dtype=torch.int64),

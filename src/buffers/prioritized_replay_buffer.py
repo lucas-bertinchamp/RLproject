@@ -7,8 +7,8 @@ class PrioritizedReplayBuffer:
         Initialize a Prioritized Replay Buffer.
 
         Args:
-            buffer_size (int): Maximum number of transitions to store in the buffer.
-            alpha (float): Determines the level of prioritization. 0 corresponds to uniform sampling.
+            buffer_size : Maximum number of transitions to store in the buffer.
+            alpha : Determines the level of prioritization. 0 corresponds to uniform sampling.
         """
         self.buffer_size = buffer_size
         self.batch_size = batch_size
@@ -23,14 +23,6 @@ class PrioritizedReplayBuffer:
     def add(self, state, action, reward, next_state, done, goal=None):
         """
         Add a new experience to the buffer.
-
-        Args:
-            state: The current state.
-            action: The action taken.
-            reward: The reward received.
-            next_state: The next state observed.
-            done: Whether the episode is done.
-            goal: Not used in this buffer.
         """
         max_priority = max(self.priorities, default=1.0)  # Assign max priority to new transitions
 
@@ -46,21 +38,16 @@ class PrioritizedReplayBuffer:
     def sample(self, beta=0.4):
         """
         Sample a batch of experiences from the buffer.
-
-        Args:
-            batch_size (int): Number of samples to draw.
-            beta (float): Controls the amount of importance sampling correction (0 = no correction).
-
-        Returns:
-            A tuple of (states, actions, rewards, next_states, dones, weights, indices).
         """
         if len(self.buffer) == 0:
-            raise ValueError("The buffer is empty. Cannot sample.")
-
+            raise ValueError("The buffer is empty")
+        
+        # Convert priorities to probabilities
         priorities = np.array(self.priorities[:len(self.buffer)])
         probabilities = priorities ** self.alpha
         probabilities /= probabilities.sum()
 
+        # Indices based on the probabilities
         indices = np.random.choice(len(self.buffer), self.batch_size, p=probabilities)
         samples = [self.buffer[idx] for idx in indices]
 
@@ -84,13 +71,10 @@ class PrioritizedReplayBuffer:
     def update_priorities(self, indices, priorities):
         """
         Update the priorities of sampled transitions.
-
-        Args:
-            indices (list): List of indices of sampled transitions.
-            priorities (list): Updated priorities for these transitions.
         """
         for idx, priority in zip(indices, priorities):
-            self.priorities[idx] = max(priority, 1e-5)
+            # Update the priority of the transition at the given index
+            self.priorities[idx] = max(priority, 1e-5) # Ensure no priority is too small (issue)
             
     def __len__(self):
         return len(self.buffer)

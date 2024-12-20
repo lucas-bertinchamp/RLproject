@@ -3,6 +3,7 @@ import torch
 import numpy as np
 
 class DHERReplayBuffer:
+
     def __init__(self, buffer_size, batch_size, max_failed_episodes=25):
         self.buffer = []
         self.failed_episodes = []
