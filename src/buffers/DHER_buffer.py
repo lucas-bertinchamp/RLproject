@@ -6,14 +6,7 @@ from collections import deque
 class DHERReplayBuffer:
     def __init__(self, buffer_size, batch_size, env, gamma, alpha=0.6, k=4):
         """
-        Initialize a Dynamic Hindsight Experience Replay Buffer.
-
-        Args:
-            buffer_size (int): Maximum number of transitions to store in the buffer.
-            batch_size (int): Number of transitions to sample from the buffer.
-            get_q_value_func (callable): Function to compute Q-values for states and actions.
-            gamma (float): Discount factor for future rewards.
-            alpha (float): Determines the extent of prioritization based on TD Errors.
+        Initialize a Dynamic Hindsight Experience Replay Buffer (DHER).
         """
         self.buffer = deque(maxlen=buffer_size)
         self.batch_size = batch_size
@@ -23,7 +16,7 @@ class DHERReplayBuffer:
         self.alpha = alpha
         self.position = 0
         self.name = "DHERReplayBuffer"
-        self.k = k
+        self.k = k # Number of dynamic goals to generate
 
     def add(self, state, action, reward, next_state, done, goal=None):
         
@@ -40,11 +33,11 @@ class DHERReplayBuffer:
 
     def generate_dynamic_goal(self, state):
         """
-        Dynamically generates a goal based on the agent's needs.
+        Dynamically generates a goal.
         """
-        # Example: Select a random position in the current range
+        #  Select a random position in the current range
         position, _ = state
-        dynamic_goal_position = np.clip(position + np.random.uniform(-0.1, 0.1), self.env.min_position, self.env.max_position)
+        dynamic_goal_position = np.clip(position + np.random.uniform(-0.1, 0.1), self.env.min_position, self.env.max_position) # Small noise 
         return np.array([dynamic_goal_position])
     
     def compute_reward(self, state, goal):
@@ -59,7 +52,7 @@ class DHERReplayBuffer:
         Checks if the dynamic goal has been reached.
         """
         position, _ = state
-        return np.abs(position - goal[0]) < 0.05
+        return np.abs(position - goal[0]) < 0.05 # Tolerance of 0.05
 
     def sample(self):
         batch = random.sample(self.buffer, self.batch_size)
